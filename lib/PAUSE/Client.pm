@@ -4,7 +4,7 @@ use Moose;
 use namespace::autoclean;
 
 use WWW::Mechanize;
-use WWW::Mechanize::TreeBuilder;
+# use WWW::Mechanize::TreeBuilder;
 
 has [ qw(password username) ] => (
   is  => 'ro',
@@ -18,7 +18,7 @@ has mech => (
   default => sub {
     my ($self) = @_;
     my $mech = WWW::Mechanize->new;
-    WWW::Mechanize::TreeBuilder->meta->apply($mech);
+    # WWW::Mechanize::TreeBuilder->meta->apply($mech);
     $mech->credentials($self->username, $self->password);
     return $mech;
   },

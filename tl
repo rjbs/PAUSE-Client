@@ -36,24 +36,25 @@ my $res = $client->mech->get(
   q{https://pause.perl.org/pause/authenquery?ACTION=delete_files}
 );
 
-my $form = $client->mech->look_down(_tag => 'form');
-my @checkboxes = $form->look_down(_tag => 'input', type => 'checkbox');
+my @files = grep { defined }
+            map  { $_->possible_values }
+            grep { $_->type eq 'checkbox' }
+            $client->mech->form_number(1)->inputs;
 
 my %found;
 
-BOX: for my $box (@checkboxes) {
-  my $value = $box->attr('value');
-  next BOX if $value eq 'CHECKSUMS';
+FILE: for my $file (@files) {
+  next FILE if $file eq 'CHECKSUMS';
 
   my $path = sprintf "authors/id/%s/%s/%s/%s",
     substr($client->username, 0, 1),
     substr($client->username, 0, 2),
     $client->username,
-    $value;
+    $file;
 
   my $dni;
 
-  if ($value =~ m{\.(readme|meta)\z}) {
+  if ($file =~ m{\.(readme|meta)\z}) {
     my $ext = $1;
     (my $fake = $path) =~ s{\.$1\z}{.tar.gz};
 
@@ -63,18 +64,31 @@ BOX: for my $box (@checkboxes) {
 
     unless (defined $dni->extension) {
       warn "ignoring unknown path type: $path";
-      next BOX;
+      next FILE;
     }
   }
 
   my $by_name = $found{ $dni->dist } ||= {};
-  my $dist = $by_name->{ $dni->version } ||= { values => [] };
-  push @{ $dist->{values} }, $value;
+  my $dist = $by_name->{ eval $dni->version } ||= { values => [] };
+  push @{ $dist->{values} }, $file;
 }
 
 use YAML::XS;
-print Dump(\%found);
-# Tree-File-0.110.meta
-# Tree-File-0.110.readme
-# Tree-File-0.110.tar.gz
 
+$client->mech->form_number(1);
+
+for my $key (keys %found) {
+  my $dist = $found{ $key };
+  next unless keys %$dist > 3;
+
+  my @versions = sort { $a <=> $b } keys %$dist;
+  for my $version (map { $versions[$_] } 3 .. $#versions) {
+    for my $file (@{ $dist->{ $version }{values} }) {
+      print "scheduling $file for deletion\n";
+      $client->mech->tick('pause99_delete_files_FILE', $file);
+    }
+  }
+}
+
+# $client->mech->click('SUBMIT_pause99_delete_files_delete');
+# print $client->mech->content;
