@@ -77,7 +77,7 @@ use YAML::XS;
 
 $client->mech->form_number(1);
 
-for my $key (keys %found) {
+for my $key (sort keys %found) {
   my $dist = $found{ $key };
   next unless keys %$dist > 3;
 
