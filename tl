@@ -90,5 +90,5 @@ for my $key (sort keys %found) {
   }
 }
 
-# $client->mech->click('SUBMIT_pause99_delete_files_delete');
-# print $client->mech->content;
+$client->mech->click('SUBMIT_pause99_delete_files_delete');
+print $client->mech->content;
