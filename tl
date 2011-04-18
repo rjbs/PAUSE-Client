@@ -68,6 +68,8 @@ FILE: for my $file (@files) {
     }
   }
 
+  next if $dni->dist eq 'perl';
+
   my $by_name = $found{ $dni->dist } ||= {};
   my $dist = $by_name->{ eval $dni->version } ||= { values => [] };
   push @{ $dist->{values} }, $file;
