@@ -101,7 +101,7 @@ for my $input (
 ) {
   for my $val ($input->possible_values) {
     next if !defined $val || !$ticked{$val};
-    $input->value(1);
+    $input->value($val);
     last;
   }
 }
