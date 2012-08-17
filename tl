@@ -79,6 +79,8 @@ use YAML::XS;
 
 $client->mech->form_number(1);
 
+my %ticked;
+
 for my $key (sort keys %found) {
   my $dist = $found{ $key };
   next unless keys %$dist > 3;
@@ -87,8 +89,20 @@ for my $key (sort keys %found) {
   for my $version (map { $versions[$_] } 3 .. $#versions) {
     for my $file (@{ $dist->{ $version }{values} }) {
       print "scheduling $file for deletion\n";
-      $client->mech->tick('pause99_delete_files_FILE', $file);
+      $ticked{ $file } ++;
     }
+  }
+}
+
+print "ticked ", scalar keys %ticked, " tickey boxes\n";
+
+for my $input (
+  $client->mech->find_all_inputs(name => 'pause99_delete_files_FILE')
+) {
+  for my $val ($input->possible_values) {
+    next if !defined $val || !$ticked{$val};
+    $input->value(1);
+    last;
   }
 }
 
